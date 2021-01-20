@@ -1,0 +1,16 @@
+'use strict'
+const express = require('express');
+const app = express();
+
+app.get('/', (req, res) => {
+
+    // return res.status(200).json({
+    //     hnsj: 'jnesy'
+    // })
+    res.render('home');
+
+    // return res.render('home');
+});
+
+
+module.exports = app;
