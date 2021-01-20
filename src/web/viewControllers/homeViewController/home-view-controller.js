@@ -3,15 +3,15 @@ const express = require('express');
 const app = express();
 const path = require('path');
 
-const { PUBLIC_PATH_SRC } = require('../../../app/config/config');
+const { PUBLIC_PATH_SRC } = require('../../../api/config/config');
 
-console.log('VIEW TESTER HERE 11');
+console.log('VIEW TESTER HERE ????');
 // const normalizedPath = `/assets/img/products/home/2.jpg`;
 // console.log(`******: ${PUBLIC_PATH}src/web/views`.replace('/\\/', '/'));
 console.log(PUBLIC_PATH_SRC('../../web/views'));
 
 
-console.log('VIEW TESTER HERE');
+console.log('VIEW TESTER HE????');
 app.set('view engine', 'ejs');
 // app.set('views', `${PUBLIC_PATH}src/web/views`);
 app.set('views', PUBLIC_PATH_SRC('../../web/views'));
