@@ -20,8 +20,32 @@
     },
     "homepage": "https://github.com/jensysantana/nodeimagetest#readme",
     "dependencies": {
+        "@google-cloud/storage": "^5.7.2",
+        "aws-sdk": "^2.827.0",
+        "bcrypt": "^5.0.0",
+        "busboy": "^0.3.1",
+        "cors": "^2.8.5",
+        "dotenv": "^8.2.0",
         "ejs": "^3.1.5",
         "express": "^4.17.1",
-        "nodemon": "^2.0.7"
+        "express-device": "^0.4.2",
+        "express-hbs": "^2.3.4",
+        "firebase": "^8.2.3",
+        "hashids": "^2.2.8",
+        "jsonwebtoken": "^8.5.1",
+        "moment": "^2.29.1",
+        "mongoose": "^5.11.9",
+        "mongoose-unique-validator": "^2.0.3",
+        "morgan": "^1.10.0",
+        "multer": "^1.4.2",
+        "nodemailer": "^6.4.17",
+        "openssl": "^1.1.0",
+        "paypal-rest-sdk": "^1.8.1",
+        "sharp": "^0.27.0",
+        "uuid": "^8.3.2",
+        "yup": "^0.32.8"
+    },
+    "devDependencies": {
+        "nodemon": "^2.0.6"
     }
 }
