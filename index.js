@@ -17,7 +17,7 @@ app.set('views', path.join(__dirname, '/src/web/views'));
 app.get('/', (req, res) => {
     // const uri = path.normalize(`${path.resolve()}/html/index.html`);
     //res.sendFile(path.join(uri));
-    return res.render('index');
+    return res.render('home');
 
 
     // res.status(200).json({
