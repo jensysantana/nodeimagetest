@@ -13,7 +13,7 @@ console.log(path.join(__dirname));
 console.log(path.join(__dirname, 'public'));
 console.log(path.join(__dirname, '/views/'));
 console.log('---------uri-99999999--------');
-app.set('views', path.join(__dirname, '/views'));
+app.set('views', path.join(__dirname, '/src/web/views'));
 app.get('/', (req, res) => {
     // const uri = path.normalize(`${path.resolve()}/html/index.html`);
     //res.sendFile(path.join(uri));
