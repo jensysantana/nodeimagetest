@@ -10,7 +10,7 @@ async function connectionDb() {
         // useCreateIndex: true,
 
     });
-    console.log('Database connected');
+    console.log('Database connected now in base url');
 }
 
 module.exports = {

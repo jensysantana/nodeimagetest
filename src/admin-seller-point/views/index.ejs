@@ -1,36 +1,11 @@
-<!DOCTYPE html>
-<html lang="en">
+<%- include('./components/head') %>
 
-<head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="format-detection" content="telephone=no">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="author" content="">
-    <meta name="keywords" content="">
-    <meta name="description" content="">
-    <link href="apple-touch-icon.png" rel="apple-touch-icon">
-    <link href="favicon.png" rel="icon">
-    <title>Claford</title>
-    <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/seller-point/assets/plugins/font-awesome/css/font-awesome.min.css">
-    <link rel="stylesheet" href="/seller-point/assets/fonts/Linearicons/Font/demo-files/demo.css">
-    <link rel="stylesheet" href="/seller-point/assets/plugins/bootstrap/css/bootstrap.min.css">
-    <link rel="stylesheet" href="/seller-point/assets/plugins/owl-carousel/assets/owl.carousel.css">
-    <link rel="stylesheet" href="/seller-point/assets/plugins/select2/dist/css/select2.min.css">
-    <link rel="stylesheet" href="/seller-point/assets/plugins/summernote/summernote-bs4.min.css">
-    <link rel="stylesheet" href="/seller-point/assets/plugins/apexcharts-bundle/dist/apexcharts.css">
-    <link rel="stylesheet" href="/seller-point/assets/css/style.css">
-</head>
-
-<body>
     <header class="header--mobile">
         <div class="header__left">
             <button class="ps-drawer-toggle"><i class="icon icon-menu"></i></button><img src="" alt="">
         </div>
         <div class="header__center">
-            <a class="ps-logo" href="#"><img src="/seller-point/assets/img/logo.png" alt=""></a>
+            <a class="ps-logo" href="#"><img src="/admin-seller-point/assets/img/logo.png" alt=""></a>
         </div>
         <div class="header__right"><a class="header__site-link" href="#"><i class="icon-exit-right"></i></a></div>
     </header>
@@ -57,7 +32,9 @@
             <div class="ps-sidebar">
                 <div class="ps-sidebar__top">
                     <div class="ps-block--user-wellcome">
-                        <div class="ps-block__left"><img src="/seller-point/assets/img/user/seller-point.jpg" alt="" /></div>
+                        <div class="ps-block__left">
+                            <img src="/admin-seller-point/assets/img/user/admin.jpg" alt="" />
+                        </div>
                         <div class="ps-block__right">
                             <p>Hello,<a href="#">Soho Store</a></p>
                         </div>
@@ -80,7 +57,7 @@
                         </ul>
                     </div>
                     <div class="ps-sidebar__footer">
-                        <div class="ps-copyright"><img src="/seller-point/assets/img/logo.png" alt="">
+                        <div class="ps-copyright"><img src="/admin-seller-point/assets/img/logo.png" alt="">
                             <p>&copy;2020 Marfury marketplace. <br/> All rights reversed.</p>
                         </div>
                     </div>
@@ -306,7 +283,7 @@
                                         <figcaption>Russia</figcaption><strong>35%</strong>
                                     </figure>
                                 </div>
-                            </div><img src="/seller-point/assets/img/map-and-bundle.png" alt="">
+                            </div><img src="/admin-seller-point/assets/img/map-and-bundle.png" alt="">
                             <p>We only started collecting region data from January 2015</p>
                         </div>
                     </section>
@@ -314,16 +291,5 @@
             </section>
         </div>
     </main>
-    <script src="/seller-point/assets/plugins/jquery.min.js"></script>
-    <script src="/seller-point/assets/plugins/popper.min.js"></script>
-    <script src="/seller-point/assets/plugins/bootstrap/js/bootstrap.min.js"></script>
-    <script src="/seller-point/assets/plugins/jquery.matchHeight-min.js"></script>
-    <script src="/seller-point/assets/plugins/select2/dist/js/select2.full.min.js"></script>
-    <script src="/seller-point/assets/plugins/summernote/summernote-bs4.min.js"></script>
-    <script src="/seller-point/assets/plugins/apexcharts-bundle/dist/apexcharts.min.js"></script>
-    <script src="/seller-point/assets/js/chart.js"></script>
-    <!-- custom code-->
-    <script src="/seller-point/assets/js/main.js"></script>
-</body>
 
-</html>
+    <%- include('./components/footer') %>

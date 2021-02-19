@@ -13,14 +13,6 @@
     </h1>
 
     <script>
-        // fetch('http://localhost:4300/products')
-        //     .then(pk => {
-
-        //         console.log('---------pk---------');
-        //         console.log(pk);
-        //         console.log('---------pk---------');
-
-        //     });
         fetch('http://localhost:4300/api/v1/products')
             .then(res => res.json())
             .then(json => {
@@ -28,15 +20,7 @@
                 console.log(json);
                 console.log("Name of the first user in the array:");
                 // console.log(json[0].name);
-            })
-
-
-        // .then(resp => {
-        //     console.log('---------dt---------');
-        //     console.log(resp);
-        //     console.log('---------dt---------');
-
-        // }).catch(err => console.log(err))
+            });
     </script>
 </body>
 

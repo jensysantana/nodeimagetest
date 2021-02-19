@@ -1,4 +1,5 @@
 'use strict'
+/*
 const multer = require('multer');
 const { PUBLIC_PATH } = require('../config/config');
 const path = require('path');
@@ -90,3 +91,5 @@ const fileFilterMiddleware = (destination, maxSize) => {
 }
 
 module.exports = fileFilterMiddleware;
+
+*/

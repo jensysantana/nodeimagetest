@@ -1,84 +1,1233 @@
+'use strict';
+//=====================================
+// Start imports
+//=====================================
 const app = require('express')();
+const moment = require('moment');
+// const upload = require('../../libs/storage');
+const { ProductModel } = require('../../models/products/products');
+const { Categories } = require('../../models/categories/categories');
 
-app.get('/', (req, res) => {
-    return res.status(200).json({
-        name: 'ksdjknvalsd  ms d'
-    })
+
+// const { BestSellerItemsFromCat, GetProductById } = require('../../middlewares/products-middleware/products-middleware');
+const GlobalHelpers = require('../../helpers/global-helpers');
+/*
+app.post('/', [upload('app\\storage\\images').single('image')], async(req, res) => {
+
+    try {
+        const {
+            title,
+            is_featured,
+            // is_hot,
+            price,
+            // sale_price,
+            vendor,
+            reviews,
+            depot,
+            inventory,
+            // is_out_of_stock,
+            // is_active,
+            // is_sale,
+            name,
+            tags,
+            url,
+            shipping,
+            delivery_date,
+            offer,
+            specification,
+            details,
+            description,
+            images,
+            thumbnail,
+            brands,
+            top_banner,
+            collections
+        } = req.body;
+
+        const product = new ProductModel({
+            title,
+            is_featured,
+            // is_hot,
+            price,
+            // sale_price,
+            vendor,
+            reviews,
+            depot,
+            inventory,
+            // is_out_of_stock,
+            // is_active,
+            // is_sale,
+            name,
+            tags,
+            url,
+            shipping,
+            delivery_date,
+            offer,
+            specification,
+            details,
+            description,
+            images: JSON.stringify(images),
+            thumbnail,
+            brands: JSON.parse(brands),
+            top_banner: JSON.parse(top_banner),
+            collections: JSON.parse(collections),
+            rnd: await ProductModel.countDocuments() + 1
+        })
+
+        // if (req.file) {
+        //     const { filename } = req.file;
+        //     product.setImageUrl(filename)
+        // }
+
+        const productStored = await product.save();
+        res.status(200).json({
+            status: 'success',
+            // productStored:productStored,
+            top_banner
+        });
+
+    } catch (error) {
+        res.status(404).json({
+            status: 'ErrorCreatingProduct',
+            error
+        });
+    }
+
+});
+*/
+
+app.get('/', async(req, res) => {
+
+    try {
+        // console.log('---------productCounter-111111--------');
+        const productCounter = await ProductModel.countDocuments();
+        const getRandom = Math.floor(Math.random() * productCounter);
+        const productStored = await ProductModel.find({});
+        // console.log(productStored[getRandom]);
+        // console.log('---------productCounter---22222------');
+        // const productStored222 = await ProductModel.aggregate([
+        //     {$match:{rnd: 3 }},
+        //     {$sample:{size: 1}}
+        // ])
+
+        return res.status(200).json({
+            status: 'success',
+            data: JSON.stringify(productStored[getRandom]),
+            message: '------------'
+                // productStored222:productStored222
+                // productStored
+        });
+
+    } catch (error) {
+        return res.status(404).json({
+            status: 'ErrorCreatingProduct',
+            data: null,
+            message: 'Sorry we cannot find your info product.'
+        });
+    }
+});
+
+app.get('/deals-hot-today', async(req, res) => {
+
+    try {
+
+        let nowDate = moment();
+        let productStored = await ProductModel.aggregate(
+            [{
+                    $match: {
+                        is_hot: true,
+                        has_offer: true,
+                        stock: { $gte: 1 },
+                        'offer.expire': { $gte: nowDate.format('YYYY-MM-DD') },
+                    }
+                },
+                { $limit: 100 },
+                { $sort: { "price": -1 } },
+
+                {
+                    $lookup: {
+                        from: "product_images",
+                        localField: "_id",
+                        foreignField: "product",
+                        as: "images"
+                    }
+                }
+            ]
+        );
+
+        const opts = [
+            { path: 'category', select: 'directory title url' },
+            { path: 'root_subcategory', select: 'directory heading menu_items url' },
+            // {
+            //     path: 'thumbnail',
+            //     // select: 'directory heading menu_items url'
+            // },
+        ]
+
+
+        await (await ProductModel.populate(productStored, opts)).map(dt => {
+
+            // console.log('---------1111JENSYYYYYYYYYYYYYYYYYY---------');
+            // console.log(dt.reviews.length);
+            // console.log('---------2222JENSYYYYYYYYYYYYYYYYYY---------');
+            if (dt.reviews.length > 0) {
+                // console.log('---------dt.reviews---------');
+                // console.log(dt.reviews);
+                // console.log('---------dt.reviews---------');
+                let rev = {
+
+                    // reviews5: {
+                    //     totalReviews: 0,
+                    //     reviewers: 0
+                    // },
+                    // reviews4: {
+                    //     totalReviews: 0,
+                    //     reviewers: 0
+                    // },
+                    // reviews3: {
+                    //     totalReviews: 0,
+                    //     reviewers: 0
+                    // },
+                    // reviews2: {
+                    //     totalReviews: 0,
+                    //     reviewers: 0
+                    // },
+                    // reviews1: {
+                    //     totalReviews: 0,
+                    //     reviewers: 0
+                    // },
+                    // reviews4: 0,
+                    // reviews3: 0,
+                    // reviews2: 0,
+                    // reviews1: 0,
+                };
+                let totalReviews = 0;
+                for (let i = 0; i < dt.reviews.length; i++) {
+                    const iterator = dt.reviews[i];
+                    totalReviews += iterator.review;
+                    // if (iterator.review === 5) {
+                    //     // console.log('---------55---------');
+                    //     rev.reviews5.totalReviews += iterator.review;
+                    //     rev.reviews5.reviewers += 1;
+                    //     // rev.reviews5 += iterator.review;
+                    // }
+                    // if (iterator.review === 4) {
+                    //     rev.reviews4.totalReviews += iterator.review;
+                    //     rev.reviews4.reviewers += 1;
+                    //     // rev.reviews4 += iterator.review;
+                    // }
+                    // if (iterator.review === 3) {
+                    //     rev.reviews3.totalReviews += iterator.review;
+                    //     rev.reviews3.reviewers += 1;
+                    //     // rev.reviews3 += iterator.review;
+                    // }
+                    // if (iterator.review === 2) {
+                    //     rev.reviews2.totalReviews += iterator.review;
+                    //     rev.reviews2.reviewers += 1;
+                    //     // rev.reviews2 += iterator.review;
+                    // }
+                    // if (iterator.review === 1) {
+                    //     rev.reviews1.totalReviews += iterator.review;
+                    //     rev.reviews1.reviewers += 1;
+                    //     // rev.reviews1 += iterator.review;
+                    // }
+                }
+
+                dt.reviews = [{
+                    totalReviews: totalReviews,
+                    totalReviewers: dt.reviews.length,
+                    ...rev
+                }];
+            }
+
+            dt.images = dt.images.filter(img => {
+                if (img.image_type === "images") {
+                    return img
+                }
+                return
+            })
+            return dt;
+        });
+        const GHelpers = new GlobalHelpers();
+        const productSelected = JSON.parse(JSON.stringify(productStored));
+        await GHelpers.getArrayUrlFromRootSubCategory(productSelected);
+
+        return res.status(200).json({
+            success: true,
+            data: productSelected,
+            message: null
+        });
+
+    } catch (error) {
+        // console.log("error", error)
+        return res.status(404).json({
+            status: 'ErrorDealsHotToday',
+            data: null,
+            message: 'Sorry we cannot find your product info.'
+        });
+    }
+});
+
+/*
+app.get('/best-seller-items-from-category/:bycategory', [BestSellerItemsFromCat], async(req, res) => {
+
+    try {
+
+        let nowDate = moment();
+        let { _id, title } = req.bestSaleItemsByCat;
+        // const productStored = await ProductModel.find( { is_hot:true, has_offer:true, inventory:{ $gte: 1 }, 'offer.expire':{ $gte: nowDate.format('YYYY-MM-DD') } })
+        // .populate('category');
+
+        const paterned = new RegExp(title);
+        // let Category = await Categories.find({ _id, title: { $regex:paterned, $options:'i'}}, 'view title image url subMenuContent');
+
+        const optionsPopulate = [
+            { path: 'category' },
+            { path: 'root_subcategory' },
+            { path: 'store' },
+            {
+                path: 'thumbnail',
+                // select: 'directory heading menu_items url'
+            },
+        ]
+        const productStored = await ProductModel.find({ category: _id }).sort({ count_sales: 'desc' }).limit(9)
+            .populate(optionsPopulate);
+        // console.log("productStored", productStored)
+        const GHelpers = new GlobalHelpers();
+
+        let productSelected = JSON.parse(JSON.stringify(productStored));
+        let newArray = [];
+        for (const iterator of productSelected) {
+            let rr = iterator.root_subcategory.menu_items.find(mn => {
+                if (mn._id === iterator.subcategory) {
+                    return mn
+                }
+            })
+            iterator.root_subcategory.menu_items = rr;
+            newArray.push({
+                ...iterator,
+            })
+        }
+        return res.status(200).json({
+            status: 'success',
+            // data:productStored,
+            data: JSON.stringify(newArray),
+            message: ''
+                // productStored222:productStored222
+                // productStored
+        });
+
+    } catch (error) {
+        console.log("error", error)
+        return res.status(404).json({
+            status: 'ErrorBestSellerItemsFromCategory',
+            data: null,
+            message: 'Sorry we cannot find your best seller items.'
+        });
+    }
+})
+
+app.get('/best-seller-by-subcategory-product/:bycategory', [BestSellerItemsFromCat], async(req, res) => {
+
+    try {
+
+        let { categoryId, subcategory } = req.bestSaleItemsByCat;
+        // const paterned = new RegExp(title);
+        const populateOpts = [
+            { path: 'category' },
+            {
+                path: 'root_subcategory',
+            },
+            { path: 'store' },
+            { path: 'thumbnail' }
+        ]
+        const productStored = await ProductModel.find({ category: categoryId, subcategory: subcategory._id }).sort({ count_sales: 'desc' }).limit(9)
+            .populate(populateOpts);
+
+        const GHelpers = new GlobalHelpers();
+        let productSelected = JSON.parse(JSON.stringify(productStored));
+        let newArray = [];
+        for (const iterator of productSelected) {
+            let rr = iterator.root_subcategory.menu_items.find(mn => {
+                if (mn._id === iterator.subcategory) {
+                    return mn
+                }
+            })
+            iterator.root_subcategory.menu_items = rr;
+            newArray.push({
+                ...iterator,
+            })
+        }
+        //.populate({path:'root_subcategory'})
+
+        return res.status(200).json({
+            status: 'success',
+            data: JSON.stringify(newArray),
+            message: ''
+        });
+
+    } catch (error) {
+        console.log("error", error)
+        return res.status(404).json({
+            status: 'ErrorBestSellerItemsFromCategory',
+            data: null,
+            message: 'Sorry we cannot find your best sellers info product.'
+        });
+    }
+})
+
+app.get('/best-seller-items-by-subcategory/:bycategory', [BestSellerItemsFromCat], async(req, res) => {
+
+    try {
+
+        let nowDate = moment();
+        let { _id, title, rootsubcategory } = req.bestSaleItemsByCat;
+        // const productStored = await ProductModel.find( { is_hot:true, has_offer:true, inventory:{ $gte: 1 }, 'offer.expire':{ $gte: nowDate.format('YYYY-MM-DD') } })
+        // .populate('category');
+
+        const paterned = new RegExp(title);
+        // const subcategoryPatern = new RegExp(rootsubcategory);
+        // let Category = await Categories.find({ _id, title: { $regex:paterned, $options:'i'}, 'subMenuContent.heading':{ $regex: subcategoryPatern, $options:'i'} }, 'view title image url subMenuContent');
+
+        const populateOpts = [
+            { path: 'category' },
+            {
+                path: 'root_subcategory',
+                // match:{ 'root_subcategory.text':'Electronic'  }
+            },
+            { path: 'store' },
+            { path: 'thumbnail' }
+        ]
+        const productStored = await ProductModel.find({ category: _id, root_subcategory: rootsubcategory._idRootCat }).sort({ count_sales: 'desc' }).limit(9)
+            .populate(populateOpts);
+
+        const GHelpers = new GlobalHelpers();
+        let productSelected = JSON.parse(JSON.stringify(productStored));
+        let newArray = [];
+        for (const iterator of productSelected) {
+            let rr = iterator.root_subcategory.menu_items.find(mn => {
+                if (mn._id === iterator.subcategory) {
+                    return mn
+                }
+            })
+            iterator.root_subcategory.menu_items = rr;
+            newArray.push({
+                ...iterator,
+            })
+        }
+        //.populate({path:'root_subcategory'})
+
+        return res.status(200).json({
+            status: 'success',
+            // data:productStored,
+            data: JSON.stringify(newArray),
+            message: ''
+                // productStored222:productStored222
+                // productStored
+        });
+
+    } catch (error) {
+        console.log("error", error)
+        return res.status(404).json({
+            status: 'ErrorBestSellerItemsFromCategory',
+            data: null,
+            message: 'Sorry we cannot complete your request, to find best sellers by category.'
+        });
+    }
+})
+
+app.get('/recommended-items-from-category/:bycategory', [BestSellerItemsFromCat], async(req, res) => {
+
+    try {
+
+        let nowDate = moment();
+        let { _id, title } = req.bestSaleItemsByCat;
+        // const productStored = await ProductModel.find( { is_hot:true, has_offer:true, inventory:{ $gte: 1 }, 'offer.expire':{ $gte: nowDate.format('YYYY-MM-DD') } })
+        // .populate('category');
+
+        const paterned = new RegExp(title);
+        // let Category = await Categories.find({ _id, title: { $regex:paterned, $options:'i'}}, 'view title image url subMenuContent');
+
+        const populateOpts = [
+            { path: 'category' },
+            { path: 'root_subcategory' },
+            { path: 'store' },
+            {
+                path: 'thumbnail',
+                // select: 'directory heading menu_items url'
+            },
+        ]
+
+        const productStored = await ProductModel.find({ category: _id }).sort({ viewed: 'desc' }).limit(9)
+            .populate(populateOpts);
+        const GHelpers = new GlobalHelpers();
+
+        let productSelected = JSON.parse(JSON.stringify(productStored));
+        let newArray = [];
+        for (const iterator of productSelected) {
+            let rr = iterator.root_subcategory.menu_items.find(mn => {
+                if (mn._id === iterator.subcategory) {
+                    return mn
+                }
+            })
+            iterator.root_subcategory.menu_items = rr;
+            newArray.push({
+                ...iterator,
+            })
+        }
+
+        return res.status(200).json({
+            status: 'success',
+            // data:productStored,
+            data: JSON.stringify(newArray),
+            message: ''
+                // productStored222:productStored222
+                // productStored
+        });
+
+    } catch (error) {
+        console.log("error", error)
+        return res.status(404).json({
+            status: 'ErrorBestSellerItemsFromCategory',
+            data: null,
+            message: 'Sorry we cannot find your recommended products.'
+        });
+    }
+})
+
+app.get('/recommended-items-by-subcategory-product/:bycategory', [BestSellerItemsFromCat], async(req, res) => {
+
+    try {
+        let { categoryId, subcategory } = req.bestSaleItemsByCat;
+        const populateOpts = [
+            { path: 'category' },
+            { path: 'root_subcategory' },
+            { path: 'store' },
+            {
+                path: 'thumbnail',
+                // select: 'directory heading menu_items url'
+            }
+        ]
+        const productStored = await ProductModel.find({ category: categoryId, subcategory: subcategory._id }).sort({ viewed: 'desc' }).limit(9)
+            .populate(populateOpts);
+        const GHelpers = new GlobalHelpers();
+        let productSelected = JSON.parse(JSON.stringify(productStored));
+        let newArray = [];
+        for (const iterator of productSelected) {
+
+            let rr = iterator.root_subcategory.menu_items.find(mn => {
+
+                if (mn._id === iterator.subcategory) {
+                    return mn
+                }
+            })
+
+            iterator.root_subcategory.menu_items = rr;
+            newArray.push({
+                ...iterator,
+            })
+        }
+        //.populate({path:'root_subcategory'})
+
+        return res.status(200).json({
+            status: 'success',
+            // data:productStored,
+            data: JSON.stringify(newArray),
+            message: ''
+        });
+
+    } catch (error) {
+        console.log("error", error)
+        return res.status(404).json({
+            status: 'ErrorBestSellerItemsFromCategory',
+            data: null,
+            message: 'Sorry we cannot find your best sellers products.'
+        });
+    }
+})
+
+app.get('/recommended-items-by-subcategory/:bycategory', [BestSellerItemsFromCat], async(req, res) => {
+
+    try {
+
+        let nowDate = moment();
+        // let { _id, title, subcategory } = req.bestSaleItemsByCat;
+        let { _id, title, rootsubcategory } = req.bestSaleItemsByCat;
+        // console.log(sl);
+
+        // const productStored = await ProductModel.find( { is_hot:true, has_offer:true, inventory:{ $gte: 1 }, 'offer.expire':{ $gte: nowDate.format('YYYY-MM-DD') } })
+        // .populate('category');
+
+        const paterned = new RegExp(title);
+        // let Category = await Categories.find({ _id, title: { $regex:paterned, $options:'i'}}, 'view title image url subMenuContent');
+
+        const populateOpts = [
+            { path: 'category' },
+            { path: 'root_subcategory' },
+            { path: 'store' },
+            {
+                path: 'thumbnail',
+                // select: 'directory heading menu_items url'
+            }
+        ]
+        const productStored = await ProductModel.find({ category: _id, root_subcategory: rootsubcategory._idRootCat }).sort({ viewed: 'desc' }).limit(9)
+            .populate(populateOpts);
+        // console.log("productStored", productStored)
+        const GHelpers = new GlobalHelpers();
+
+        let productSelected = JSON.parse(JSON.stringify(productStored));
+        let newArray = [];
+        for (const iterator of productSelected) {
+            let rr = iterator.root_subcategory.menu_items.find(mn => {
+                if (mn._id === iterator.subcategory) {
+                    return mn
+                }
+            })
+            iterator.root_subcategory.menu_items = rr;
+            newArray.push({
+                ...iterator,
+            })
+        }
+        //.populate({path:'root_subcategory'})
+
+        return res.status(200).json({
+            status: 'success',
+            // data:productStored,
+            data: JSON.stringify(newArray),
+            message: ''
+                // productStored222:productStored222
+                // productStored
+        });
+
+    } catch (error) {
+        console.log("error", error)
+        return res.status(404).json({
+            status: 'ErrorBestSellerItemsFromCategory',
+            data: null,
+            message: 'Sorry we cannot find your recommended items by category.'
+        });
+    }
+})
+
+app.get('/product-list-from-category/:bycategory', [BestSellerItemsFromCat], async(req, res) => {
+
+    try {
+
+        let nowDate = moment();
+        // console.log('---------moment---------');
+        // console.log(nowDate.format('YYYY-MM-DD'));
+        // console.log('---------moment---------');
+
+        let { _id, title, typeView, pageSize, nextPage } = req.bestSaleItemsByCat;
+        // const productStored = await ProductModel.find( { is_hot:true, has_offer:true, inventory:{ $gte: 1 }, 'offer.expire':{ $gte: nowDate.format('YYYY-MM-DD') } })
+        // .populate('category');
+
+        const paterned = new RegExp(title);
+        // let Category = await Categories.find({ _id, title: { $regex:paterned, $options:'i'}}, 'view title image url subMenuContent');
+
+
+        let sorter = {}
+        let searchType = {}
+        if (typeView === 'latest') {
+            sorter.createdAt = 'desc';
+            searchType = { category: _id }
+        }
+        if (typeView === 'lowtohighprice') {
+            sorter.price = 'asc';
+            searchType = { category: _id }
+        }
+        if (typeView === 'hightolowprice') {
+            sorter.price = 'desc';
+            searchType = { category: _id }
+        }
+        if (typeView === 'rating') {
+            searchType = { category: _id }
+            sorter.reviewsTotalGross = 'desc';
+        }
+
+        if (pageSize > 200) {
+            pageSize = 65;
+        }
+
+        if (nextPage >= pageSize) {
+            return res.status(404).json({
+                // status:'ErrorBestSellerItemsFromCategory',
+                status: 'ErrorItemsFromCategory',
+                data: null,
+                message: 'Sorry we cannot find your the products of list.'
+            });
+        }
+
+        const populateOpts = [
+            { path: 'category' },
+            { path: 'root_subcategory' },
+            { path: 'store' },
+            { path: 'thumbnail' }
+        ]
+        const productStored = await ProductModel.find(searchType).sort(sorter).skip(nextPage).limit(pageSize)
+            .populate(populateOpts);
+        const GHelpers = new GlobalHelpers();
+        // let newData = JSON.parse(JSON.stringify(productStored))
+
+        // let newArray = [];
+        // for (let iterData of newData) {
+        //     const respReviews = await GHelpers.reviewsProccessByObject(iterData.reviews);
+        //     iterData.reviews = respReviews;
+        //     newArray.push({
+        //         ...iterData,
+        //         // iterData:respReviews
+        //     })
+        // }
+        let productSelected = JSON.parse(JSON.stringify(productStored));
+        let newArray = [];
+        for (const iterator of productSelected) {
+            let rr = iterator.root_subcategory.menu_items.find(mn => {
+                if (mn._id === iterator.subcategory) {
+                    return mn
+                }
+            })
+            iterator.root_subcategory.menu_items = rr;
+            newArray.push({
+                ...iterator,
+            })
+        }
+        //.populate({path:'root_subcategory'})
+
+        return res.status(200).json({
+            status: 'success',
+            // data:productStored,
+            data: JSON.stringify(newArray),
+            totalItems: newArray.length,
+            message: ''
+        });
+
+    } catch (error) {
+        console.log("error", error)
+        return res.status(404).json({
+            // status:'ErrorBestSellerItemsFromCategory',
+            status: 'ErrorItemsFromCategory',
+            data: null,
+            message: 'Sorry we cannot find your product list subcategory.'
+        });
+    }
+})
+
+app.get('/product-list-by-subcategory/:bycategory', [BestSellerItemsFromCat], async(req, res) => {
+
+    try {
+
+        let nowDate = moment();
+        let { _id, title, rootsubcategory, typeView, pageSize, nextPage } = req.bestSaleItemsByCat;
+        // console.log("req.bestSaleItemsByCat", nextPage)
+        // console.log(sl);
+
+        // const productStored = await ProductModel.find( { is_hot:true, has_offer:true, inventory:{ $gte: 1 }, 'offer.expire':{ $gte: nowDate.format('YYYY-MM-DD') } })
+        // .populate('category');
+
+        // const paterned = new RegExp(rootsubcategory);
+        // let Category = await Categories.find({ _id, title: { $regex:paterned, $options:'i'}}, 'view title image url subMenuContent');
+
+        let sorter = {}
+        let searchType = {}
+        if (typeView === 'latest') {
+            sorter.createdAt = 'desc';
+            searchType = { category: _id, root_subcategory: rootsubcategory._id }
+        }
+        if (typeView === 'lowtohighprice') {
+            sorter.price = 'asc';
+            searchType = { category: _id, root_subcategory: rootsubcategory._id }
+        }
+        if (typeView === 'hightolowprice') {
+            sorter.price = 'desc';
+            searchType = { category: _id, root_subcategory: rootsubcategory._id }
+        }
+        if (typeView === 'rating') {
+            searchType = { category: _id, root_subcategory: rootsubcategory._id }
+            sorter.reviewsTotalGross = 'desc';
+        }
+
+        if (pageSize > 200) {
+            pageSize = 65;
+        }
+
+        if (nextPage >= pageSize) {
+            return res.status(404).json({
+                // status:'ErrorBestSellerItemsFromCategory',
+                status: 'ErrorItemsFromCategory',
+                data: null,
+                message: 'Sorry we cannot find your list of product by subcategory.'
+            });
+        }
+
+        const populateOpts = [
+            { path: 'category' },
+            { path: 'root_subcategory' },
+            { path: 'store' },
+            {
+                path: 'thumbnail',
+                // select: 'directory heading menu_items url'
+            }
+        ]
+        const productStored = await ProductModel.find(searchType).sort(sorter).skip(nextPage).limit(pageSize)
+            .populate(populateOpts);
+        // console.log("productStored", productStored)
+        // const GHelpers = new GlobalHelpers();
+        // let newData = JSON.parse(JSON.stringify(productStored))
+
+        // let newArray = [];
+        // for (let iterData of newData) {
+        //     const respReviews = await GHelpers.reviewsProccessByObject(iterData.reviews);
+        //     iterData.reviews = respReviews;
+        //     newArray.push({
+        //         ...iterData,
+        //         // iterData:respReviews
+        //     })
+        // }
+        let productSelected = JSON.parse(JSON.stringify(productStored));
+        let newArray = [];
+        for (const iterator of productSelected) {
+            let rr = iterator.root_subcategory.menu_items.find(mn => {
+                if (mn._id === iterator.subcategory) {
+                    return mn
+                }
+            })
+            iterator.root_subcategory.menu_items = rr;
+            newArray.push({
+                ...iterator,
+            })
+        }
+        //.populate({path:'root_subcategory'})
+
+        return res.status(200).json({
+            status: 'success',
+            // data:productStored,
+            data: JSON.stringify(newArray),
+            totalItems: newArray.length,
+            message: ''
+                // productStored222:productStored222
+                // productStored
+        });
+
+    } catch (error) {
+        console.log("error", error)
+        return res.status(404).json({
+            // status:'ErrorBestSellerItemsFromCategory',
+            status: 'ErrorItemsFromCategory',
+            data: null,
+            message: 'Sorry we cannot find your category list products.'
+        });
+    }
+})
+
+app.get('/product-list-by-subcategory-product/:bycategory', [BestSellerItemsFromCat], async(req, res) => {
+
+    try {
+        let { _id, subcategory, typeView, pageSize, nextPage } = req.bestSaleItemsByCat;
+        let sorter = {}
+        let searchType = {}
+        if (typeView === 'latest') {
+            sorter.createdAt = 'desc';
+            searchType = { category: _id, subcategory: subcategory._id }
+        }
+        if (typeView === 'lowtohighprice') {
+            sorter.price = 'asc';
+            searchType = { category: _id, subcategory: subcategory._id }
+        }
+        if (typeView === 'hightolowprice') {
+            sorter.price = 'desc';
+            searchType = { category: _id, subcategory: subcategory._id }
+        }
+        if (typeView === 'rating') {
+            searchType = { category: _id, subcategory: subcategory._id }
+            sorter.reviewsTotalGross = 'desc';
+        }
+
+        if (pageSize > 200) {
+            pageSize = 65;
+        }
+
+        if (nextPage >= pageSize) {
+            return res.status(404).json({
+                // status:'ErrorBestSellerItemsFromCategory',
+                status: 'ErrorItemsFromCategory',
+                data: null,
+                message: 'Sorry we cannot find your info product by.'
+            });
+        }
+        const populateOpts = [
+            { path: 'category' },
+            {
+                path: 'root_subcategory',
+            },
+            { path: 'store' },
+            { path: 'thumbnail' }
+        ]
+        const productStored = await ProductModel.find(searchType).sort(sorter).skip(nextPage).limit(pageSize)
+            .populate(populateOpts);
+
+        let productSelected = JSON.parse(JSON.stringify(productStored));
+        let newArray = [];
+        for (const iterator of productSelected) {
+            let rr = iterator.root_subcategory.menu_items.find(mn => {
+                if (mn._id === iterator.subcategory) {
+                    return mn
+                }
+            })
+
+            iterator.root_subcategory.menu_items = rr;
+            newArray.push({
+                ...iterator,
+            })
+        }
+        //.populate({path:'root_subcategory'})
+        return res.status(200).json({
+            status: 'success',
+            data: JSON.stringify(newArray),
+            totalItems: newArray.length,
+            message: ''
+        });
+
+    } catch (error) {
+        console.log("error", error)
+        return res.status(404).json({
+            // status:'ErrorBestSellerItemsFromCategory',
+            status: 'ErrorItemsFromCategory',
+            data: null,
+            message: 'Sorry we cannot find your product list by subcategory products.'
+        });
+    }
+})
+
+//==============================
+// Start get one product by id
+//==============================
+
+app.get('/product/:productId', [GetProductById], async(req, res) => {
+
+    try {
+
+        let { _id } = req.productData;
+        // const productStored = await ProductModel.find( { is_hot:true, has_offer:true, inventory:{ $gte: 1 }, 'offer.expire':{ $gte: nowDate.format('YYYY-MM-DD') } })
+        // .populate('category');
+
+        // const paterned = new RegExp(title);
+        // let Category = await Categories.find({ _id, title: { $regex:paterned, $options:'i'}}, 'view title image url subMenuContent');
+        const populateOpts = [
+            { path: 'category' },
+            { path: 'root_subcategory' },
+            { path: 'store' },
+            { path: 'thumbnail' },
+            {
+                path: 'variants.img',
+                // select:'directory title url'
+            },
+            {
+                path: 'variants.product_size.size_id',
+                // select:'directory title url'
+            }
+        ]
+
+        const productStored = await ProductModel.findOne({ _id })
+            .populate(populateOpts);
+        const GHelpers = new GlobalHelpers();
+
+        let productSelected = JSON.parse(JSON.stringify(productStored));
+        productSelected.root_subcategory.menu_items = productSelected.root_subcategory.menu_items.find(mn => {
+                if (mn._id === productSelected.subcategory) {
+                    return mn;
+                }
+            })
+            // console.log("rr", rr)
+            // for (const iterator of productSelected) {
+            //     let rr = iterator.root_subcategory.menu_items.find(mn => {
+            //         if (mn._id === iterator.subcategory) {
+            //             return mn;
+            //         }
+            //     })
+            //     iterator.root_subcategory.menu_items = rr;
+            //     newArray.push({
+            //         ...iterator,
+            //     })
+            // }
+
+        return res.status(200).json({
+            status: 'success',
+            // data:productSelected,
+            data: JSON.stringify(productSelected),
+            message: ''
+        });
+
+    } catch (error) {
+        console.log("error", error)
+        return res.status(404).json({
+            status: 'ErrorInvalidItemsDetails',
+            data: null,
+            message: 'Sorry we cannot find the product'
+        });
+    }
+})
+
+app.get('/frequently-bought-together/:productId', [GetProductById], async(req, res) => {
+
+    try {
+
+        let { _id, category_id } = req.productData;
+        // const productStored = await ProductModel.find( { is_hot:true, has_offer:true, inventory:{ $gte: 1 }, 'offer.expire':{ $gte: nowDate.format('YYYY-MM-DD') } })
+        // .populate('category');
+
+        // const paterned = new RegExp(title);
+        // let Category = await Categories.find({ _id, title: { $regex:paterned, $options:'i'}}, 'view title image url subMenuContent');
+        const populateOpts = [
+            { path: 'category' },
+            { path: 'root_subcategory' },
+            // { path: 'store'},
+            { path: 'thumbnail' },
+            {
+                path: 'variants.img',
+                // select:'directory title url'
+            },
+            {
+                path: 'variants.product_size.size_id',
+                // select:'directory title url'
+            }
+        ]
+
+        // ,title:title
+
+        const productStored = await ProductModel.find({ _id: { $ne: _id }, category: category_id }).limit(20).sort({ viewed: 'desc' })
+            .populate(populateOpts)
+            // console.log("productStored", productStored)
+        const GHelpers = new GlobalHelpers();
+        const randomN = Math.floor(Math.random() * productStored.length)
+            // console.log('---------productStored.length---------');
+            // console.log(randomN);
+            // console.log(productStored.length);
+            // console.log(productStored);
+            // console.log('---------productStored.length---------');
+        let productSelected = JSON.parse(JSON.stringify(productStored[randomN]));
+
+        productSelected.root_subcategory.menu_items = productSelected.root_subcategory.menu_items.find(mn => {
+            if (mn._id === productSelected.subcategory) {
+                return mn;
+            }
+        })
+
+        // console.log("rr", rr)
+        // let newArray = [];
+        // for (const iterator of productSelected) {
+        //     let rr = iterator.root_subcategory.menu_items.find(mn => {
+        //         if (mn._id === iterator.subcategory) {
+        //             return mn;
+        //         }
+        //     })
+        //     iterator.root_subcategory.menu_items = rr;
+        //     newArray.push({
+        //         ...iterator,
+        //     })
+        // }
+
+        return res.status(200).json({
+            status: 'success',
+            // data:productSelected,
+            data: JSON.stringify(productSelected),
+            message: ''
+        });
+
+    } catch (error) {
+        console.log("error", error)
+        return res.status(404).json({
+            status: 'ErrorProductsBougthTogether',
+            data: null,
+            message: 'Sorry we cannot find the product'
+        });
+    }
 })
 
 
-/*
-colors product
-types view: round, portrait, select
-sizes 
-type view: round, portrait, select.
+app.get('/same-brand/:productId', [GetProductById], async(req, res) => {
 
+    try {
+
+        let { _id, brand } = req.productData;
+        const populateOpts = [
+            { path: 'category' },
+            { path: 'root_subcategory' },
+            { path: 'store' },
+            { path: 'thumbnail' },
+        ]
+
+        const productStored = await ProductModel.find({ _id: { $ne: _id }, brand }).limit(3).sort({ viewed: 'desc' })
+            .populate(populateOpts)
+        const GHelpers = new GlobalHelpers();
+        let productSelected = JSON.parse(JSON.stringify(productStored));
+
+        // productSelected.root_subcategory.menu_items = productSelected.root_subcategory.menu_items.find(mn => {
+        //     if (mn._id === productSelected.subcategory) {
+        //         return mn;
+        //     }
+        // })
+
+        // console.log("rr", rr)
+        let newArray = [];
+        for (const iterator of productSelected) {
+            let rr = iterator.root_subcategory.menu_items.find(mn => {
+                if (mn._id === iterator.subcategory) {
+                    return mn;
+                }
+            })
+            iterator.root_subcategory.menu_items = rr;
+            newArray.push({
+                ...iterator,
+            })
+        }
+
+        return res.status(200).json({
+            status: 'success',
+            // data:productSelected,
+            data: JSON.stringify(productSelected),
+            message: ''
+        });
+
+    } catch (error) {
+        console.log("error", error)
+        return res.status(404).json({
+            status: 'ErrorProductsRelateds',
+            data: null,
+            message: 'Sorry we cannot find the product'
+        });
+    }
+})
+
+app.get('/relateds/:productId', [GetProductById], async(req, res) => {
+    try {
+
+        let { _id, category_id } = req.productData;
+        const populateOpts = [
+            { path: 'category' },
+            { path: 'root_subcategory' },
+            { path: 'store' },
+            { path: 'thumbnail' },
+        ]
+
+        const productStored = await ProductModel.find({ _id: { $ne: _id }, category: category_id }).limit(9).sort({ viewed: 'desc' })
+            .populate(populateOpts)
+        const GHelpers = new GlobalHelpers();
+        let productSelected = JSON.parse(JSON.stringify(productStored));
+
+        // productSelected.root_subcategory.menu_items = productSelected.root_subcategory.menu_items.find(mn => {
+        //     if (mn._id === productSelected.subcategory) {
+        //         return mn;
+        //     }
+        // })
+
+        // console.log("rr", rr)
+        let newArray = [];
+        for (const iterator of productSelected) {
+            let rr = iterator.root_subcategory.menu_items.find(mn => {
+                if (mn._id === iterator.subcategory) {
+                    return mn;
+                }
+            })
+            iterator.root_subcategory.menu_items = rr;
+            newArray.push({
+                ...iterator,
+            })
+        }
+        return res.status(200).json({
+            status: 'success',
+            // data:productSelected,
+            data: JSON.stringify(productSelected),
+            message: ''
+        });
+
+    } catch (error) {
+        console.log("error", error)
+        return res.status(404).json({
+            status: 'ErrorProductsSameBrand',
+            data: null,
+            message: 'Sorry we cannot find the product'
+        });
+    }
+})
+
+app.get('/customer-also-bought/:productId', [GetProductById], async(req, res) => {
+
+    try {
+
+        let { _id } = req.productData;
+        const populateOpts = [
+            { path: 'category' },
+            { path: 'root_subcategory' },
+            { path: 'store' },
+            { path: 'thumbnail' },
+        ]
+
+        const productStored = await ProductModel.find({ _id: { $ne: _id } }).limit(6).sort({ viewed: 'desc' })
+            .populate(populateOpts)
+        const GHelpers = new GlobalHelpers();
+        let productSelected = JSON.parse(JSON.stringify(productStored));
+
+        // productSelected.root_subcategory.menu_items = productSelected.root_subcategory.menu_items.find(mn => {
+        //     if (mn._id === productSelected.subcategory) {
+        //         return mn;
+        //     }
+        // })
+
+        // console.log("rr", rr)
+        let newArray = [];
+        for (const iterator of productSelected) {
+            let rr = iterator.root_subcategory.menu_items.find(mn => {
+                if (mn._id === iterator.subcategory) {
+                    return mn;
+                }
+            })
+            iterator.root_subcategory.menu_items = rr;
+            newArray.push({
+                ...iterator,
+            })
+        }
+        return res.status(200).json({
+            status: 'success',
+            // data:productSelected,
+            data: JSON.stringify(productSelected),
+            message: ''
+        });
+
+    } catch (error) {
+        console.log("error", error)
+        return res.status(404).json({
+            status: 'ErrorProductsCustomerAlsoBought',
+            data: null,
+            message: 'Sorry we cannot find the product'
+        });
+    }
+})
+
+app.patch('/set-product-viewed/:productId', [GetProductById], async(req, res) => {
+
+    try {
+        let { _id } = req.productData;
+        const productStored = await ProductModel.updateOne({ _id: _id }, { $inc: { viewed: 1 } });
+
+        return res.status(200).json({
+            status: 'success',
+            // data:productSelected,
+            data: productStored,
+            message: ''
+        });
+
+    } catch (error) {
+        console.log("error", error)
+        return res.status(404).json({
+            status: 'ErrorProductsCustomerAlsoBought',
+            data: null,
+            message: 'Sorry we cannot find the product'
+        });
+    }
+})
 */
-/*
-
-  "id": "tddy123uk",
-  "item_group_id": "tddy123uk",
-  "sku": "OY1236H3",
-  "title": "Men's long sleeves white shirt",
-  "description": "This product has long sleeve, comfortable fabric, button front closure and a solid color",
-  "price": 69,
-  "image_url": "http://www.example.com/my_image.jpg",
-  "product_url": "http://www.example.com/my_product",
-  "category": "Clothing > Shirt > For work",
-  "thumbnail_url": "http://www.example.com/my_image_small.jpg",
-  "availability": "in stock",
-  "created_at": "2014-04-22T06:00:00Z",
-  "brand": "Calvin Klein",
-  "material": "60% Cotton, 40% Polyester",
-  "color": "white",
-  "size": "L",
-  "quantity": 30,
-  "gender": "Man",
-  "occasion": "wedding"
-}
-
-//varian
-{
-  "id": "610010",
-  "title": "Men's long sleeves white shirt",
-  "price": 54,
-  "size": "L",
-  ...
-  "item_group_id": "630446"
-}
-{
-  "id": "610011",
-  "title": "Men's long sleeves white shirt",
-  "price": 60,
-  "size": "XL",
-  ...,
-  "item_group_id": "630446"
-}
-
-
-
-{"Product ID":7631,"SKU":"HEH-9133","Name":"On Cloud Nine Pillow","Product URL":"https://www.domain.com/product/heh-9133","Price":24.99,"Retail Price":24.99,"Thumbnail URL":"https://www.domain.com/images/heh-9133_600x600.png","Search Keywords":"lorem, ipsum, dolor, ...","Description":"Sociosqu facilisis duis ...","Category":"Home>Home Decor>Pillows|Back In Stock","Category ID":"298|511","Brand":"FabDecor","Child SKU":"","Child Price":"","Color":"White","Color Family":"White","Color Swatches":"","Size":"","Shoe Size":"","Pants Size":"","Occassion":"","Season":"","Badges":"","Rating Avg":4.2,"Rating Count":8,"Inventory Count":21,"Date Created":"2018-03-03 17:41:13"}
-{"Product ID":7615,"SKU":"HEH-2245","Name":"Simply Sweet Blouse","Product URL":"https://www.domain.com/product/heh-2245","Price":42,"Retail Price":59.95,"Thumbnail URL":"https://www.domain.com/images/heh-2245_600x600.png","Search Keywords":"lorem, ipsum, dolor, ...","Description":"Sociosqu facilisis duis ...","Category":"Clothing>Tops>Blouses|Clearance|Tops On Sale","Category ID":"285|512|604","Brand":"Entity Apparel","Child SKU":"HEH-2245-RSWD-SM|HEH-2245-RSWD-MD|HEH-2245-THGR-SM|EH-2245-THGR-MD|HEH-2245-DKCH-SM|HEH-2245-DKCH-MD","Child Price":"42|59.99","Color":"Rosewood|Thyme Green|Dark Charcoal","Color Family":"Red|Green|Grey","Color Swatches":"[{\"color\":\"Rosewood\", \"family\":\"Red\", \"swatch_hex\":\"#65000b\", \"thumbnail\":\"/images/heh-2245-rswd-sm_600x600.png\", \"price\":42}, {\"color\":\"Thyme Green\", \"family\":\"Green\", \"swatch_img\":\"/swatches/thyme_green.png\", \"thumbnail\":\"/images/heh-2245-thgr-sm_600x600.png\", \"price\":59.99}, {\"color\":\"Dark Charcoal\", \"family\":\"Grey\", \"swatch_hex\":\"#36454f\", \"thumbnail\":\"/images/heh-2245-dkch-sm_600x600.png\", \"price\":59.99}]","Size":"Small|Medium","Shoe Size":"","Pants Size":"","Occassion":"","Season":"Summer|Spring","Badges":"Exclusive|Clearance","Rating Avg":4.5,"Rating Count":10,"Inventory Count":8,"Date Created":"2018-03-20 22:24:21"}
-{"Product ID":8100,"SKU":"WKS-6016","Name":"Uptown Girl Blouse","Product URL":"https://www.domain.com/product/wks-6016","Price":58,"Retail Price":89.95,"Thumbnail URL":"https://www.domain.com/images/wks-6016_600x600.png","Search Keywords":"lorem, ipsum, dolor, ...","Description":"Sociosqu facilisis duis ...","Category":"Clothing>Tops>Blouses","Category ID":285,"Brand":"Entity Apparel","Child SKU":"WKS-6016-CORD-MD|WKS-6016-KEGR-MD","Child Price":"","Color":"Coral Red|Kelly Green","Color Family":"Red|Green","Color Swatches":"[{\"color\":\"Coral Red\", \"family\":\"Red\", \"swatch_img\":\"/swatches/coral_red.png\", \"thumbnail\":\"/images/wks-6016-cord-md_600x600.png\", \"price\":58}, {\"color\":\"Kelly Green\", \"family\":\"Green\", \"swatch_img\":\"/swatches/kelly_green.png\", \"thumbnail\":\"/images/wks-6016-kegr-md_600x600.png\", \"price\":58}]","Size":"Medium","Shoe Size":"","Pants Size":"","Occassion":"","Season":"Summer|Spring","Badges":"Exclusive","Rating Avg":4.2,"Rating Count":11,"Inventory Count":9,"Date Created":"2018-03-16 21:55:28"}
-{"Product ID":6489,"SKU":"DKO-PROF","Name":"Knock Your Socks Off Lace-Up Heels","Product URL":"https://www.domain.com/product/dko-prof","Price":38,"Retail Price":60,"Thumbnail URL":"https://www.domain.com/images/dko-prof_600x600.png","Search Keywords":"lorem, ipsum, dolor, ...","Description":"Sociosqu facilisis duis ...","Category":"Shoes>Heels>Lace-Up Heels|Featured Products|Shoes On Sale","Category ID":"310|719|605","Brand":"Spark Collective","Child SKU":"DKO-PROF-BLK-5|DKO-PROF-BLK-5.5|DKO-PROF-BLK-6|DKO-PROF-BLK-7|DKO-PROF-BLK-7.5","Child Price":"","Color":"Black","Color Family":"Black","Color Swatches":"","Size":"","Shoe Size":"5|5.5|6|7|7.5","Pants Size":"","Occassion":"","Season":"","Badges":"Featured","Rating Avg":4.9,"Rating Count":4,"Inventory Count":19,"Date Created":"2018-02-28 23:37:28"}
-{"Product ID":7732,"SKU":"HEH-2172","Name":"My Cup of Tea Sweater","Product URL":"https://www.domain.com/product/heh-2172","Price":68,"Retail Price":68,"Thumbnail URL":"https://www.domain.com/images/heh-2172_600x600.png","Search Keywords":"lorem, ipsum, dolor, ...","Description":"Sociosqu facilisis duis ...","Category":"Clothing>Tops>Sweaters","Category ID":277,"Brand":"Enigma Clothes","Child SKU":"HEH-2172-WHT-MD|HEH-2172-WHT-LG","Child Price":"","Color":"White","Color Family":"White","Color Swatches":"","Size":"Medium|Large","Shoe Size":"","Pants Size":"","Occassion":"","Season":"Winter","Badges":"","Rating Avg":4.6,"Rating Count":22,"Inventory Count":3,"Date Created":"2018-03-01 20:18:20"}
-{"Product ID":7609,"SKU":"HEH-2211","Name":"Walk On Out Slip On Sneakers","Product URL":"https://www.domain.com/product/heh-2211","Price":34.99,"Retail Price":34.99,"Thumbnail URL":"https://www.domain.com/images/heh-2211_600x600.png","Search Keywords":"lorem, ipsum, dolor, ...","Description":"Sociosqu facilisis duis ...","Category":"Shoes>Sneakers>Slip-On Sneakers","Category ID":302,"Brand":"Temptation","Child SKU":"HEH-2211-BSQ-6|HEH-2211-BSQ-7|HEH-2211-BSQ-8|HEH-2211-BSQ-9|HEH-2211-BSQ-10|HEH-2211-BSQ-10.5","Child Price":"","Color":"Bisque","Color Family":"Beige","Color Swatches":"","Size":"","Shoe Size":"6|7|8|9|10|10.5","Pants Size":"","Occassion":"","Season":"","Badges":"","Rating Avg":3.9,"Rating Count":5,"Inventory Count":2,"Date Created":"2018-03-20 22:15:34"}
-{"Product ID":7675,"SKU":"DKO-CAMEL","Name":"Warm Hearts Sweater","Product URL":"https://www.domain.com/product/dko-camel","Price":54.49,"Retail Price":54.49,"Thumbnail URL":"https://www.domain.com/images/dko-camel_600x600.png","Search Keywords":"lorem, ipsum, dolor, ...","Description":"Sociosqu facilisis duis ...","Category":"Clothing>Tops>Sweaters|Back In Stock|Featured Products","Category ID":"277|511|719","Brand":"Legacy Apparel","Child SKU":"DKO-CAMEL-GRY-SM","Child Price":"","Color":"Grey","Color Family":"Grey","Color Swatches":"","Size":"Small","Shoe Size":"","Pants Size":"","Occassion":"","Season":"Winter","Badges":"Featured|Free Shipping","Rating Avg":5,"Rating Count":2,"Inventory Count":20,"Date Created":"2018-03-19 20:53:04"}
-{"Product ID":7463,"SKU":"WKS-5026","Name":"Silver Lining Dress","Product URL":"https://www.domain.com/product/wks-5026","Price":62,"Retail Price":62,"Thumbnail URL":"https://www.domain.com/images/wks-5026_600x600.png","Search Keywords":"lorem, ipsum, dolor, ...","Description":"Sociosqu facilisis duis ...","Category":"Dresses>Formal Dresses|All Dresses","Category ID":"220|201","Brand":"Temptation","Child SKU":"WKS-5026-GRNP-XS|WKS-5026-GRNP-SM|WKS-5026-GRNP-MD","Child Price":"","Color":"Green Print","Color Family":"Green","Color Swatches":"","Size":"X-Small|Small|Medium","Shoe Size":"","Pants Size":"","Occassion":"Formal","Season":"","Badges":"","Rating Avg":5,"Rating Count":9,"Inventory Count":0,"Date Created":"2018-03-01 19:59:05"}
-{"Product ID":7677,"SKU":"PCH-8738","Name":"Follow The Beat Sneakers","Product URL":"https://www.domain.com/product/pch-8738","Price":32,"Retail Price":32,"Thumbnail URL":"https://www.domain.com/images/pch-8738_600x600.png","Search Keywords":"lorem, ipsum, dolor, ...","Description":"Sociosqu facilisis duis ...","Category":"Shoes>Sneakers>Slip-On Sneakers","Category ID":302,"Brand":"Fusion Fashion","Child SKU":"PCH-8738-GRY-8|PCH-8738-GRY-9|PCH-8738-BLK-8|PCH-8738-BLK-9|PCH-8738-LEP-8|PCH-8738-LEP-9","Child Price":"","Color":"Grey|Black|Leopard","Color Family":"Grey|Black|Multi","Color Swatches":"[{\"color\":\"Grey\", \"family\":\"Grey\", \"swatch_hex\":\"#d3d3d3\", \"thumbnail\":\"/images/pch-8738-gry-8_600x600.png\", \"price\":32}, {\"color\":\"Black\", \"family\":\"Black\", \"swatch_hex\":\"#000000\", \"thumbnail\":\"/images/pch-8738-blk-8_600x600.png\", \"price\":32}, {\"color\":\"Leopard\", \"family\":[\"Black\",\"Multi\"], \"swatch_img\":\"/swatches/leopard.png\", \"thumbnail\":\"/images/pch-8738-lep-8_600x600.png\", \"price\":32}]","Size":"","Shoe Size":"8|9","Pants Size":"","Occassion":"","Season":"","Badges":"","Rating Avg":4.5,"Rating Count":1,"Inventory Count":8,"Date Created":"2019-01-31 16:24:09"}
-{"Product ID":8099,"SKU":"PCH-8475","Name":"Cup of Joe Pillow","Product URL":"https://www.domain.com/product/pch-8475","Price":36,"Retail Price":36,"Thumbnail URL":"https://www.domain.com/images/pch-8475_600x600.png","Search Keywords":"lorem, ipsum, dolor, ...","Description":"Sociosqu facilisis duis ...","Category":"Home>Home Decor>Pillows","Category ID":298,"Brand":"FabDecor","Child SKU":"","Child Price":"","Color":"Seafoam Green","Color Family":"Green","Color Swatches":"","Size":"","Shoe Size":"","Pants Size":"","Occassion":"","Season":"","Badges":"","Rating Avg":4,"Rating Count":1,"Inventory Count":18,"Date Created":"2018-02-28 19:03:26"}
-{"Product ID":7425,"SKU":"BCO-SK101","Name":"Burst Your Bubble Denim Jacket","Product URL":"https://www.domain.com/product/bco-sk101","Price":84,"Retail Price":110,"Thumbnail URL":"https://www.domain.com/images/bco-sk101_600x600.png","Search Keywords":"lorem, ipsum, dolor, ...","Description":"Sociosqu facilisis duis ...","Category":"Clothing>Tops>Jackets|Clearance|Tops On Sale","Category ID":"279|512|604","Brand":"Zigzag Clothing","Child SKU":"BCO-SK101-WSDM-LG","Child Price":"","Color":"Washed Denim","Color Family":"Denim","Color Swatches":"","Size":"Large","Shoe Size":"","Pants Size":"","Occassion":"","Season":"","Badges":"Clearance","Rating Avg":5,"Rating Count":1,"Inventory Count":17,"Date Created":"2018-05-04 21:32:28"}
-{"Product ID":8102,"SKU":"HEH-2254","Name":"Walk It Out Heels","Product URL":"https://www.domain.com/product/heh-2254","Price":32,"Retail Price":32,"Thumbnail URL":"https://www.domain.com/images/heh-2254_600x600.png","Search Keywords":"lorem, ipsum, dolor, ...","Description":"Sociosqu facilisis duis ...","Category":"Shoes>Heels>Pumps|New Arrivals|Featured Products","Category ID":"311|510|719","Brand":"Fusion Fashion","Child SKU":"HEH-2254-BLK-6|HEH-2254-BLK-7|HEH-2254-BLK-8","Child Price":"","Color":"Black","Color Family":"Black","Color Swatches":"","Size":"","Shoe Size":"6|7|8","Pants Size":"","Occassion":"","Season":"","Badges":"Featured","Rating Avg":4.7,"Rating Count":5,"Inventory Count":10,"Date Created":"2019-01-31 16:48:23"}
-{"Product ID":9964,"SKU":"BCO-2208","Name":"Word To The Wise Journal","Product URL":"https://www.domain.com/product/bco-2208","Price":14.95,"Retail Price":14.95,"Thumbnail URL":"https://www.domain.com/images/bco-2208_600x600.png","Search Keywords":"lorem, ipsum, dolor, ...","Description":"Sociosqu facilisis duis ...","Category":"Home>Desk Decor>Journals","Category ID":410,"Brand":"Vintage Home","Child SKU":"","Child Price":"","Color":"Blue","Color Family":"Blue","Color Swatches":"","Size":"","Shoe Size":"","Pants Size":"","Occassion":"","Season":"","Badges":"","Rating Avg":4,"Rating Count":32,"Inventory Count":5,"Date Created":"2018-10-18 15:19:37"}
-{"Product ID":10440,"SKU":"KOI-721","Name":"Basic Beauty Off-The-Shoulder Dress","Product URL":"https://www.domain.com/product/koi-721","Price":52,"Retail Price":78,"Thumbnail URL":"https://www.domain.com/images/koi-721_600x600.png","Search Keywords":"lorem, ipsum, dolor, ...","Description":"Sociosqu facilisis duis ...","Category":"Dresses>Off-The-Shoulder Dresses|Dresses On Sale","Category ID":"221|603","Brand":"Oasis","Child SKU":"KOI-721-BLP-SM|KOI-721-BLP-MD","Child Price":"","Color":"Blue Print","Color Family":"Blue|Multi","Color Swatches":"","Size":"Small|Medium","Shoe Size":"","Pants Size":"","Occassion":"Graduation","Season":"","Badges":"Exclusive","Rating Avg":3.2,"Rating Count":15,"Inventory Count":30,"Date Created":"2018-03-03 17:38:50"}
-{"Product ID":6060,"SKU":"VBH-V5102","Name":"Sunset Boulevard Pants","Product URL":"https://www.domain.com/product/vbh-v5102","Price":44,"Retail Price":60,"Thumbnail URL":"https://www.domain.com/images/vbh-v5102_600x600.png","Search Keywords":"lorem, ipsum, dolor, ...","Description":"Sociosqu facilisis duis ...","Category":"Clothing>Bottoms>Pants|All Bottoms","Category ID":"236|204","Brand":"Monolith","Child SKU":"VBH-V5102-WHT-24|VBH-V5102-WHT-25|VBH-V5102-WHT-26|VBH-V5102-WHT-27|VBH-V5102-BEG-24|VBH-V5102-BEG-25|VBH-V5102-BEG-26|VBH-V5102-BEG-27|VBH-V5102-BEG-30|VBH-V5102-BEG-31","Child Price":"","Color":"White|Beige","Color Family":"White|Beige","Color Swatches":"[{\"color\":\"White\", \"family\":\"White\", \"swatch_hex\":\"#ffffff\", \"thumbnail\":\"/images/vbh-v5102-wht-24_600x600.png\", \"price\":44}, {\"color\":\"Beige\", \"family\":\"Beige\", \"swatch_hex\":\"#f5f5dc\", \"thumbnail\":\"/images/vbh-v5102-bge-24_600x600.png\", \"price\":44}]","Size":"","Shoe Size":"","Pants Size":"24|25|26|27|30|31","Occassion":"","Season":"","Badges":"","Rating Avg":3.8,"Rating Count":33,"Inventory Count":1,"Date Created":"2018-02-28 23:57:53"}
-{"Product ID":10448,"SKU":"SKE-15460","Name":"Across The Pond Boots","Product URL":"https://www.domain.com/product/ske-15460","Price":74.49,"Retail Price":74.49,"Thumbnail URL":"https://www.domain.com/images/ske-15460_600x600.png","Search Keywords":"lorem, ipsum, dolor, ...","Description":"Sociosqu facilisis duis ...","Category":"Shoes>Boots>Flat Boots","Category ID":334,"Brand":"Legacy Collective","Child SKU":"SKE-15460-BRN-6|SKE-15460-BRN-7|SKE-15460-BRN-8.5","Child Price":"","Color":"Brown","Color Family":"Brown","Color Swatches":"","Size":"","Shoe Size":"6|7|8.5","Pants Size":"","Occassion":"","Season":"","Badges":"","Rating Avg":5,"Rating Count":6,"Inventory Count":0,"Date Created":"2018-06-25 18:09:07"}
-{"Product ID":8137,"SKU":"PCH-8705","Name":"Once Upon A Time Lace Dress","Product URL":"https://www.domain.com/product/pch-8705","Price":50,"Retail Price":108,"Thumbnail URL":"https://www.domain.com/images/pch-8705_600x600.png","Search Keywords":"lorem, ipsum, dolor, ...","Description":"Sociosqu facilisis duis ...","Category":"Dresses>Lace Dresses|Dresses>All Dresses|New Arrivals","Category ID":"222|201|510","Brand":"Oasis","Child SKU":"PCH-8705-WHT-SM|PCH-8705-WHT-MD|PCH-8705-WHT-LG|PCH-8705-BLK-SM|PCH-8705-BLK-MD|PCH-8705-BLK-LG|PCH-8705-LTBL-SM|PCH-8705-LTBL-MD|PCH-8705-LTBL-LG","Child Price":"50|72|108","Color":"White|Black|Light Blue","Color Family":"White|Black|Blue","Color Swatches":"[{\"color\":\"White\", \"family\":\"White\", \"swatch_hex\":\"#ffffff\", \"thumbnail\":\"/images/pch-8705-wht-sm_600x600.png\", \"price\":50}, {\"color\":\"Black\", \"family\":\"Black\", \"swatch_hex\":\"#000000\", \"thumbnail\":\"/images/pch-8705-blk-sm_600x600.png\", \"price\":108}, {\"color\":\"Light Blue\", \"family\":\"Blue\", \"swatch_img\":\"/swatches/light_blue.png\", \"thumbnail\":\"/images/pch-8705-ltbl-sm_600x600.png\", \"price\":72}]","Size":"Small|Medium|Large","Shoe Size":"","Pants Size":"","Occassion":"Party","Season":"","Badges":"","Rating Avg":5,"Rating Count":4,"Inventory Count":0,"Date Created":"2019-02-15 20:33:28"}
-{"Product ID":10018,"SKU":"PGF-ESS","Name":"Lovey Dovey Maxi Dress","Product URL":"https://www.domain.com/product/pgf-ess","Price":68,"Retail Price":68,"Thumbnail URL":"https://www.domain.com/images/pgf-ess_600x600.png","Search Keywords":"lorem, ipsum, dolor, ...","Description":"Sociosqu facilisis duis ...","Category":"Dresses>Maxi Dresses|Dresses>All Dresses|New Arrivals","Category ID":"223|201|510","Brand":"Oasis","Child SKU":"PGF-ESS-FUOR-SM|PGF-ESS-FUOR-MD|PGF-ESS-FUOR-LG|PGF-ESS-PRPT-SM|PGF-ESS-PRPT-MD|PGF-ESS-PRPT-LG","Child Price":"","Color":"Fuschia Orange|Perfect Petals|Island Time","Color Family":"Orange|Pink|Yellow|Multi","Color Swatches":"[{\"color\":\"Fuschia Orange\", \"family\":[\"Orange\",\"Pink\"], \"swatch_img\":\"/swatches/fuschia_orange.png\", \"thumbnail\":\"/images/pgf-ess-fuor-sm_600x600.png\", \"price\":68}, {\"color\":\"Perfect Petals\", \"family\":\"Pink\", \"swatch_img\":\"/swatches/perfect_petals.png\", \"thumbnail\":\"/images/pgf-ess-prpt-sm_600x600.png\", \"price\":68}, {\"color\":\"Island Time\", \"family\":[\"Yellow\",\"Orange\",\"Multi\"], \"swatch_img\":\"/swatches/island_time.png\", \"thumbnail\":\"/images/pgf-ess-istm-sm_600x600.png\", \"price\":68}]","Size":"Small|Medium|Large","Shoe Size":"","Pants Size":"","Occassion":"Party","Season":"","Badges":"","Rating Avg":4.8,"Rating Count":12,"Inventory Count":24,"Date Created":"2019-02-20 21:38:02"}
-{"Product ID":5670,"SKU":"HEH-2223","Name":"Shot in the Dark Pillow","Product URL":"https://www.domain.com/product/heh-2223","Price":40,"Retail Price":40,"Thumbnail URL":"https://www.domain.com/images/heh-2223_600x600.png","Search Keywords":"lorem, ipsum, dolor, ...","Description":"Sociosqu facilisis duis ...","Category":"Home>Home Decor>Pillows","Category ID":298,"Brand":"Vintage Home","Child SKU":"","Child Price":"","Color":"Coral","Color Family":"Red","Color Swatches":"","Size":"","Shoe Size":"","Pants Size":"","Occassion":"","Season":"","Badges":"Free Shipping","Rating Avg":4,"Rating Count":3,"Inventory Count":8,"Date Created":"2018-03-01 20:28:28"}
-{"Product ID":9020,"SKU":"PGF-RIK","Name":"Diamonds Are Forever Pillow","Product URL":"https://www.domain.com/product/pgf-rik","Price":36,"Retail Price":36,"Thumbnail URL":"https://www.domain.com/images/pgf-rik_600x600.png","Search Keywords":"lorem, ipsum, dolor, ...","Description":"Sociosqu facilisis duis ...","Category":"Home>Home Decor>Pillows","Category ID":298,"Brand":"Vintage Home","Child SKU":"","Child Price":"","Color":"Light Blue","Color Family":"Blue","Color Swatches":"","Size":"","Shoe Size":"","Pants Size":"","Occassion":"","Season":"","Badges":"Free Shipping","Rating Avg":5,"Rating Count":3,"Inventory Count":11,"Date Created":"2018-03-16 22:17:50"}
-
-*/
-
+//==============================
+// End get one product by id
+//==============================
 
 module.exports = app;

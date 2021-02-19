@@ -5,13 +5,12 @@ const path = require('path');
 
 const { PUBLIC_PATH_SRC } = require('../../../config/config');
 
-console.log('VIEW TESTER HERE ????');
 // const normalizedPath = `/assets/img/products/home/2.jpg`;
 // console.log(`******: ${PUBLIC_PATH}src/web/views`.replace('/\\/', '/'));
-console.log(PUBLIC_PATH_SRC('../web/views'));
+// console.log('VIEW TESTER HERE ????');
+// console.log(PUBLIC_PATH_SRC('../web/views'));
+// console.log('VIEW TESTER HE????');
 
-
-console.log('VIEW TESTER HE????');
 // app.set('views', `${PUBLIC_PATH}src/web/views`);
 app.set('view engine', 'ejs');
 app.set('views', PUBLIC_PATH_SRC('../web/views'));
@@ -33,7 +32,7 @@ app.get('/', (req, res) => {
     // res.render('home', { url: 'manzana' });
 
     // return res.sendFile(PUBLIC_PATH_SRC('../../web/views/'));
-    return res.render('home');
+    return res.render('index');
 });
 
 
